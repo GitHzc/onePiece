@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="账户设置">
+        <menu>
+            <item
+                android:id="@+id/nav_swtich"
+                android:icon="@drawable/account"
+                android:title="切换账户" />
+            <item
+                android:id="@+id/nav_edit"
+                android:icon="@drawable/edit"
+                android:title="编辑资料" />
+            <item
+                android:id="@+id/nav_quit"
+                android:icon="@drawable/quit"
+                android:title="退出登录" />
+        </menu>
+    </item>
+    <item android:title="系统设置">
+        <menu>
+            <item
+                android:id="@+id/nav_light"
+                android:icon="@drawable/zhaomingdianzi"
+                android:title="夜间模式" />
+            <item
+                android:id="@+id/nav_clear"
+                android:icon="@drawable/delete"
+                android:title="清除缓存" />
+
+        </menu>
+    </item>
+    <item
+        android:id="@+id/nav_version"
+        android:title="关于One Piece" />
+
+
+
+
+</menu>
