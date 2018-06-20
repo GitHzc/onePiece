@@ -13,16 +13,25 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.onepiece.db.MyDataBaseHelper;
 import com.example.onepiece.model.Playlist;
 import com.example.onepiece.model.Song;
+import com.example.onepiece.model.SongList;
+import com.example.onepiece.model.SongLists;
 import com.example.onepiece.util.DebugMessage;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Random;
 
@@ -35,34 +44,41 @@ public class MusicPlayerService extends Service{
     private ArrayList<String> LyricContent;
     private ArrayList<String> MusicInfo;
     private ArrayList<String> MusicList;
+    private ArrayList<String> songList;
     private String mPlaylistTitle;
     private int mCurrentSongIndex;
     private int playingMode = 0;    //0:顺序播放 1:随机播放
     private final String mLyricPath = Environment.getExternalStoragePublicDirectory(DIRECTORY_MUSIC).getAbsolutePath()
             + File.separator + "lyric/";
+    private String dataPath = "data.txt";
     public MusicPlayerService() {}
     BCReceiver mBcReceiver;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        InitPlayingSetting();      //初始化默认播放路径
         mBcReceiver = new BCReceiver();  //创建广播接收器
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mMusicPlayerService = this;
-        mPlaylistTitle = intent.getStringExtra("playlistTitle");
-        mCurrentSongIndex = intent.getIntExtra("index", 0);
+        if(intent.getStringExtra("playlistTitle") != null){
+            mPlaylistTitle = intent.getStringExtra("playlistTitle");
+        }
+        if(intent.getIntExtra("index", 0) != -1) {
+            mCurrentSongIndex = intent.getIntExtra("index", -1);
+        }
         Log.d(DebugMessage.TAG, "onStartCommand: title " + mPlaylistTitle);
         Log.d(DebugMessage.TAG, "onStartCommand: index " + mCurrentSongIndex);
+
         //注册广播接收器
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.broadcast.ToService");
         registerReceiver(mBcReceiver, intentFilter);
         System.out.println("Service Broadcast Registered!!!");
-
-        InitMediaPlayer();              //初始化播放器
+        //初始化播放器
+        InitMediaPlayer();
         //同步歌曲播放进度
         new Thread(){
             @Override
@@ -88,6 +104,27 @@ public class MusicPlayerService extends Service{
         return null;
     }
 
+    @Override
+    public void onDestroy(){
+        //保存当前播放状态
+        try{
+            FileOutputStream fos = openFileOutput(dataPath, Context.MODE_PRIVATE);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, "utf-8");
+            osw.write(mPlaylistTitle);
+            osw.write("\r\n");
+            osw.write(mCurrentSongIndex);
+            osw.flush();
+            fos.flush();
+            osw.close();
+            fos.close();
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     //初始化播放器
     public void InitMediaPlayer(){
@@ -100,22 +137,23 @@ public class MusicPlayerService extends Service{
 
         try{
             InitMusicList();             //初始化播放列表
+            InitSongList();             //初始化歌单列表
             mMediaPlayer.setDataSource(MusicPlayerService.this, Uri.parse(MusicList.get(mCurrentSongIndex)));  //设置播放路径
             mMediaPlayer.prepareAsync();
             //加载完成监听
             mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                           @Override
-                                           public void onPrepared(MediaPlayer mediaPlayer) {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
                     mediaPlayer.start();
-            }
-        });
+                }
+            });
             //播放完毕监听
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                                             @Override
-                                             public void onCompletion(MediaPlayer mediaPlayer) {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
                     nextmusic();
-            }
-        });
+                }
+            });
             String songTitle = Playlist.get(MusicPlayerService.this, mPlaylistTitle)
                     .getSongs()
                     .get(mCurrentSongIndex)
@@ -156,7 +194,9 @@ public class MusicPlayerService extends Service{
     //跳转到目标URL播放
     public void jump(String url){
         //更新歌曲歌词路径
-        mCurrentSongIndex = MusicList.indexOf(url);
+        if(MusicList.indexOf(url) != -1){
+            mCurrentSongIndex = MusicList.indexOf(url);
+        }
         //重新初始化播放器
         InitMediaPlayer();
     }
@@ -192,6 +232,12 @@ public class MusicPlayerService extends Service{
             String url = intent.getStringExtra("JumpToUrl");
             if(url != null){
                 jump(url);
+            }
+            //添加到歌单
+            String songListName = intent.getStringExtra("AddToSongList");
+            if(songListName != null){
+                MyDataBaseHelper db = MyDataBaseHelper.get(MusicPlayerService.this, "OnePiece", 1);
+                db.insertSong(db.getWritableDatabase(), songListName, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId()));
             }
         }
     }
@@ -302,13 +348,28 @@ public class MusicPlayerService extends Service{
         BCSender("PlayingList", MusicList);
     }
 
+    //初始歌单列表
+    public void InitSongList(){
+        songList = new ArrayList<String>();
+        try{
+            //TODO
+            List<com.example.onepiece.model.SongList> lists = SongLists.get(MusicPlayerService.this).getSongLists();
+            for(SongList list : lists){
+                songList.add(list.getTitle());
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        BCSender("SongList", songList);
+    }
+
     //根据当前播放歌曲在歌曲列表中取出下一首的URL
     public void GetNextMusicURL(int mode) {
-        if(mode == 1 && playingMode == 0){  //顺序播放下一首
+        if(mode == 1 && playingMode == 0){          //顺序播放下一首
             mCurrentSongIndex = (mCurrentSongIndex + 1) % MusicList.size();
-        }else if (mode == 2 && playingMode == 0){ //顺序播放上一首
+        }else if (mode == 2 && playingMode == 0){   //顺序播放上一首
             mCurrentSongIndex = (mCurrentSongIndex + MusicList.size() - 1) % MusicList.size();
-        }else if (playingMode == 1){ //随机取出下一首
+        }else if (playingMode == 1){                //随机取出下一首
             Random rand = new Random();
             int choice = mCurrentSongIndex;
             while(choice == mCurrentSongIndex){
@@ -325,5 +386,31 @@ public class MusicPlayerService extends Service{
 
     public MediaPlayer getMediaPlayer() {
         return mMediaPlayer;
+    }
+
+    //读取初始化播放状态
+    public void InitPlayingSetting(){
+        try{
+            FileInputStream fis = openFileInput(dataPath);
+            InputStreamReader isr = new InputStreamReader(fis, "utf-8");
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+            for (int i = 0; i < 2; i++){
+                line = br.readLine();
+                if(line != null && i == 0){
+                    mPlaylistTitle = line;
+                }else if(line != null && i == 1){
+                    mCurrentSongIndex = Integer.parseInt(line);
+                }
+            }
+            isr.close();
+            fis.close();
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

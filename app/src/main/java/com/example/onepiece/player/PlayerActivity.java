@@ -16,12 +16,14 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.onepiece.R;
+import com.example.onepiece.model.SongList;
 
 import java.util.List;
 
@@ -29,11 +31,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private static final String TAG = "PlayerActivity";
 
     private SeekBar seekbar;
-    private ImageButton playpause;
-    private ImageButton nextmusic;
-    private ImageButton lastmusic;
-    private ImageButton circlestyle;
-    private ImageButton playinglist;
+    private ImageView playpause;
+    private ImageView nextmusic;
+    private ImageView lastmusic;
+    private ImageView circlestyle;
+    private ImageView playinglist;
+    private ImageView love;
+    private ImageView add;
     private TextView currtime;
     private TextView totaltime;
     private TextView musictitle;
@@ -44,6 +48,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private List<String> LyricContent;
     private List<String> MusicInfo;
     private List<String> PlayingList;
+    private List<String> songList;
 
     private int TotalTime = 0;
     private int CurrTime = 0;
@@ -57,11 +62,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.first_layout);
-        playpause = (ImageButton) findViewById(R.id.playpause);
-        nextmusic = (ImageButton) findViewById(R.id.nextmusic);
-        lastmusic = (ImageButton) findViewById(R.id.lastmusic);
-        circlestyle = (ImageButton) findViewById(R.id.circlestyle);
-        playinglist = (ImageButton) findViewById(R.id.playinglist);
+        playpause = (ImageView) findViewById(R.id.playpause);
+        nextmusic = (ImageView) findViewById(R.id.nextmusic);
+        lastmusic = (ImageView) findViewById(R.id.lastmusic);
+        circlestyle = (ImageView) findViewById(R.id.circlestyle);
+        playinglist = (ImageView) findViewById(R.id.playinglist);
+        love = (ImageView) findViewById(R.id.love);
+        add = (ImageView) findViewById(R.id.add);
         seekbar = (SeekBar)findViewById(R.id.seekbar);
         currtime = (TextView)findViewById(R.id.currtime);
         totaltime = (TextView)findViewById(R.id.totaltime);
@@ -75,6 +82,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         lastmusic.setOnClickListener(this);
         circlestyle.setOnClickListener(this);
         playinglist.setOnClickListener(this);
+        love.setOnClickListener(this);
+        add.setOnClickListener(this);
 
         //注册广播接受器
         mBcReceiver = new BCReceiver();
@@ -177,6 +186,9 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             if (intent.getStringArrayListExtra("PlayingList") != null){
                 PlayingList = intent.getStringArrayListExtra("PlayingList");
             }
+            if(intent.getStringArrayListExtra("SongList") != null){
+                songList = intent.getStringArrayListExtra("SongList");
+            }
             if (intent.getIntExtra("CurrTime",0) != 0) {
                 CurrTime = intent.getIntExtra("CurrTime", 0);
             }
@@ -230,7 +242,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 }
                 break;
             case R.id.playinglist:
-                PopupwindowEnter();
+                PlayingListPopupwindowEnter();
+                break;
+            case R.id.love:
+                BCSender("AddToSongList","我喜欢的音乐");
+                break;
+            case R.id.add:
+                MusicListPopupwindowEnter();
                 break;
             default:
                 break;
@@ -296,8 +314,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
-    //popupwindow
-    private void PopupwindowEnter() {
+    //弹出当前播放歌曲列表
+    private void PlayingListPopupwindowEnter() {
         // 利用layoutInflater获得View
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.playing_list, null);
@@ -326,21 +344,32 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 BCSender("JumpToUrl",PlayingList.get(i));
             }
         });
-//        playingList.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//            }
-//        });
+    }
 
-        // popWindow消失监听方法
-//        window.setOnDismissListener(new PopupWindow.OnDismissListener() {
-//            @Override
-//            public void onDismiss() {
-//                System.out.println("popWindow消失");
-//            }
-//        });
+    //弹出歌单列表
+    private void MusicListPopupwindowEnter() {
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.layout.playing_list, null);
 
+        PopupWindow window = new PopupWindow(view, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        window.setFocusable(true);
+
+        // 实例化一个ColorDrawable颜色为半透明
+        ColorDrawable dw = new ColorDrawable(0xb0000000);
+        window.setBackgroundDrawable(dw);
+
+        window.setAnimationStyle(R.style.popupwindow_moving);
+        window.showAtLocation(PlayerActivity.this.findViewById(R.id.playinglist), Gravity.BOTTOM, 0, 0);
+
+
+        ListView playingList = (ListView) view.findViewById(R.id.playingList);
+        playingList.setAdapter(new ArrayAdapter<String>(this, R.layout.playing_list_item, songList));
+        playingList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                BCSender("AddToSongList", songList.get(i));
+            }
+        });
     }
 
 }
