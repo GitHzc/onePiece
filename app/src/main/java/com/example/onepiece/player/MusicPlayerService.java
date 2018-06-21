@@ -57,7 +57,7 @@ public class MusicPlayerService extends Service{
     @Override
     public void onCreate() {
         super.onCreate();
-        InitPlayingSetting();      //初始化默认播放路径
+        //InitPlayingSetting();      //初始化默认播放路径
         mBcReceiver = new BCReceiver();  //创建广播接收器
     }
 
