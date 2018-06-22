@@ -292,6 +292,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     myID.setText(intent.getStringExtra("getusername"));
                 }
                 break;
+            case 6:
+                if(resultCode == 6){
+                    mode = true;
+                    WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                            WindowManager.LayoutParams.TYPE_APPLICATION,
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                            PixelFormat.TRANSLUCENT);
+
+                    lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+                    lp.y = 10;
+                    if (mNightView == null) {
+                        mNightView = new TextView(this);
+                        mNightView.setBackgroundColor(0x80000000);
+                    }
+                    try{
+                        mWindowManager.addView(mNightView, lp);
+                    }catch(Exception ex){}
+                }
+                else if(resultCode == 7){
+                    mode = false;
+                    try{
+                        mWindowManager.removeView(mNightView);
+                    }catch(Exception ex){}
+                }
+                break;
         }
     }
 }
