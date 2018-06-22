@@ -76,7 +76,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         singer = (TextView)findViewById(R.id.singer);
         musictitle.setMovementMethod(ScrollingMovementMethod.getInstance());
         musiclyric = (TextView)findViewById(R.id.musiclyric);
-        musiclyric.setMovementMethod(ScrollingMovementMethod.getInstance());
         playpause.setOnClickListener(this);
         nextmusic.setOnClickListener(this);
         lastmusic.setOnClickListener(this);
@@ -245,7 +244,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 PlayingListPopupwindowEnter();
                 break;
             case R.id.love:
-                BCSender("AddToSongList","我喜欢的音乐");
+                BCSender("AddToSongList","我的喜欢");
                 break;
             case R.id.add:
                 MusicListPopupwindowEnter();
@@ -266,8 +265,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     }
     //歌词更新
     private void Lyric_Displayer(){
-        final int PastSize = 4; //当前歌词前有四条
-        final int PrepareSize = 4; //当前歌词后有五条
+        final int PastSize = 4;     //当前歌词前有四条
+        final int PrepareSize = 4;  //当前歌词后有四条
         while(true){
             if(LyricTime == null || LyricContent == null || MusicInfo == null){
                 continue;
@@ -278,9 +277,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 String lyricContent = "";
                 for(int i = position - PastSize; i <= position + PrepareSize; i++){
                     if(i == position){
-                        lyricContent += "<font color='#FF0000'>" + LyricContent.get(i) + "</font><br>";
+                        lyricContent += "<font color='#363636'><big>" + LyricContent.get(i) + "</big></font><br>";
                     }else if(i >= 0 && i < LyricTime.size()){
-                        lyricContent += LyricContent.get(i) + "<br>";
+                        if(i + 1 == position || i - 1 == position){
+                            lyricContent += "<font color='#696969'>" + LyricContent.get(i) + "</font><br>";
+                        }else if(i + 2 == position || i - 2 == position){
+                            lyricContent += "<font color='#828282'>" + LyricContent.get(i) + "</font><br>";
+                        }else if(i + 3 == position || i - 3 == position){
+                            lyricContent += "<font color='#9C9C9C'>" + LyricContent.get(i) + "</font><br>";
+                        }else if(i + 4 == position || i - 4 == position){
+                            lyricContent += "<font color='#B5B5B5'>" + LyricContent.get(i) + "</font><br>";
+                        }
                     }else{
                         lyricContent += "<br>";
                     }

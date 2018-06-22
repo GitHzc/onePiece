@@ -39,16 +39,15 @@
         <TextView
             android:id="@+id/musiclyric"
             android:layout_width="match_parent"
-            android:layout_height="350dp"
+            android:layout_height="420dp"
             android:layout_below="@+id/singer"
             android:layout_marginHorizontal="20dp"
             android:layout_marginBottom="20dp"
             android:lineSpacingExtra="30dp"
             android:maxLines="9"
             android:gravity="center|top"
-            android:scrollbars="vertical"
-            android:textSize="10dp"
-            android:scrollbarStyle="insideOverlay"
+            android:textSize="15dp"
+            android:textColor="#FF0000"
             android:text="本首歌曲暂无歌词"/>
     </RelativeLayout>
     //功能
