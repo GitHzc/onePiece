@@ -1,21 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_light"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_login"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context="com.lg.slidingmenudemo.EditActivity"
+    android:weightSum="1"
     >
     <ListView
         android:id="@id/android:list"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
     </ListView>
-    <include
-        layout="@layout/header_all"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/light_toolbar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"/>
+        app:navigationIcon="@drawable/baseline_arrow_back_24">
+
+        <TextView
+            android:id="@+id/toolbar_light_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            tools:text="夜间模式" />
+
+    </android.support.v7.widget.Toolbar>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="#000"
+        android:layout_marginBottom="5dp"/>
     <Button
         android:layout_height="wrap_content"
         android:layout_width="match_parent"

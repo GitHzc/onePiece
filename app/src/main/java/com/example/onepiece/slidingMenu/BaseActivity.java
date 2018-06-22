@@ -1,9 +1,14 @@
 package com.example.onepiece.slidingMenu;
 
+import android.content.Context;
+import android.graphics.PixelFormat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatDelegate;
+import android.view.Gravity;
+import android.view.WindowManager;
+import android.widget.TextView;
 
 public class BaseActivity extends AppCompatActivity {
     private static boolean enableNightMode = false;
@@ -13,6 +18,19 @@ public class BaseActivity extends AppCompatActivity {
         if(!enableNightMode) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else {
+            WindowManager manager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT ,WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION ,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+
+            params.gravity = Gravity.TOP;
+            params.y = 10 ;
+
+            TextView tv = new TextView( this);
+            tv.setBackgroundColor(0xAA000000 );
+            manager.addView(tv,params);
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
     }

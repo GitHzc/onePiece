@@ -2,18 +2,22 @@ package com.example.onepiece.slidingMenu;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -38,6 +42,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.onepiece.R;
+import com.example.onepiece.mainPage.MainActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,45 +50,87 @@ import java.io.RandomAccessFile;
 
 public class DataActivity extends AppCompatActivity {
     private String filePath = "/data/data/com.lg.slidingmenudemo/file/";
+
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+    private View mNightView = null;
+    private WindowManager mWindowManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mWindowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_data);
+        init();
 
         Button button_count = findViewById(R.id.register_btn_sure);
         button_count.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-
-                Toast.makeText(DataActivity.this,"注册成功",Toast.LENGTH_SHORT).show();
                 TextView textView1 = findViewById(R.id.edt_register_account);
                 TextView textView2 = findViewById(R.id.edt_register_pwd);
-
-                String s1 = textView1.getText().toString();
+                String s = textView1.getText().toString();
                 String s2 = textView2.getText().toString();
-                String s3 = s1 + " " +s2;
-                String name = s1 + ".txt";
-                writeTxtToFile(s3, filePath, name);
-                Intent intent = new Intent();
-                intent.putExtra("getusername" ,s1);
-                intent.putExtra("getpwd",s2);
-                setResult(5,intent);
-                finish();
+                //判断用户名和密码是否为空
+                if(null == s || "".equals(s)){
+                    Toast.makeText(DataActivity.this,"用户名不能为空",Toast.LENGTH_SHORT).show();
+                }
+                else if(null == s2 || "".equals(s2)){
+                    Toast.makeText(DataActivity.this,"密码不能为空",Toast.LENGTH_SHORT).show();
+                }
+                else if(s2.length() < 6){
+                    Toast.makeText(DataActivity.this,"密码长度应当大于六位",Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(DataActivity.this,"注册成功",Toast.LENGTH_SHORT).show();
+                    ////////******应当在这里与服务器连接，将用户名和密码传输到服务器，下面有将字符串写为文本文件的代码
+                    Intent intent = new Intent();
+                    intent.putExtra("getusername" ,s);
+                    intent.putExtra("getpwd",s2);
+                    setResult(5,intent);
+                    finish();
+                }
+
             }
         });
-        ImageButton imageButton1 = findViewById(R.id.comeback);
-        imageButton1.setOnClickListener(new View.OnClickListener(){
+        Toolbar toolbar = findViewById(R.id.data_toolbar);
+        toolbar.setTitle("注册");
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View view) {
                 finish();
             }
         });
 
+
+    }
+    //检测是否切换为夜间模式
+    public void init(){
+        if(MainActivity.mode){
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+
+            lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+            lp.y = 10;
+            if (mNightView == null) {
+                mNightView = new TextView(this);
+                mNightView.setBackgroundColor(0x80000000);
+            }
+            try{
+                mWindowManager.addView(mNightView, lp);
+            }catch(Exception ex){}
+        }
+        else{
+            try{
+                mWindowManager.removeView(mNightView);
+            }catch(Exception ex){}
+        }
     }
     /**
      *

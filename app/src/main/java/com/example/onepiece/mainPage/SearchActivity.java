@@ -1,6 +1,8 @@
 package com.example.onepiece.mainPage;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -9,7 +11,10 @@ import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.onepiece.R;
@@ -41,10 +46,14 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SearchActivity extends AppCompatActivity {
+    private View mNightView = null;
+    private WindowManager mWindowManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mWindowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        init();
 
         Toolbar toolbar = findViewById(R.id.activity_search_toolbar);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -93,5 +102,31 @@ public class SearchActivity extends AppCompatActivity {
                 return false;
             }
         });
+    }
+    //检测是否切换为夜间模式
+    public void init(){
+        if(MainActivity.mode){
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+
+            lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+            lp.y = 10;
+            if (mNightView == null) {
+                mNightView = new TextView(this);
+                mNightView.setBackgroundColor(0x80000000);
+            }
+            try{
+                mWindowManager.addView(mNightView, lp);
+            }catch(Exception ex){}
+        }
+        else{
+            try{
+                mWindowManager.removeView(mNightView);
+            }catch(Exception ex){}
+        }
     }
 }

@@ -2,10 +2,12 @@ package com.example.onepiece.mainPage;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -21,8 +23,10 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,17 +55,55 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private MyViewPageAdapter mMyViewPageAdapter;
     private String[] titles = new String[] {"One", "音乐", "发现"};
     private List<Fragment> fragments = new ArrayList<>();
+    public static boolean mode = false;
+    private View mNightView = null;
+    private WindowManager mWindowManager;
     String[] permissions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mWindowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
         getPermission();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
+
     }
 
+    //夜间模式
+    public static void switch_Mode(){
+        if(mode == false){
+            mode = true;
+        }
+        else{
+            mode = true;
+        }
+    }
     private void init() {
+        if(mode){
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+
+            lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+            lp.y = 10;
+            if (mNightView == null) {
+                mNightView = new TextView(this);
+                mNightView.setBackgroundColor(0x80000000);
+            }
+            try{
+                mWindowManager.addView(mNightView, lp);
+            }catch(Exception ex){}
+        }
+        else{
+            try{
+                mWindowManager.removeView(mNightView);
+            }catch(Exception ex){}
+        }
+
         toolbar = findViewById(R.id.main_activity_toolbar);
         mTabLayout = findViewById(R.id.tab_layout);
         mViewPager = findViewById(R.id.view_pager);
@@ -166,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         else if(id == R.id.nav_light){
             Intent intent_light = new Intent(MainActivity.this,LightActivity.class);
-            startActivity(intent_light);
+            startActivityForResult(intent_light,6);
         }
         else if(id == R.id.nav_clear){
             Toast.makeText(this, "已清除本地缓存", Toast.LENGTH_SHORT).show();
@@ -230,15 +272,39 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if(resultCode == 3){
                     myID = headview.findViewById(R.id.show_username);
                     myID.setText(intent.getStringExtra("getusername"));
-                    myimage = headview.findViewById(R.id.show_image);
-                    Bitmap photo = getIntent().getParcelableExtra("getimage");
-                    myimage.setImageBitmap(photo); //显示拍照图片
                 }
                 break;
             case 4:
                 if(resultCode == 4){
                     myID = headview.findViewById(R.id.show_username);
                     myID.setText(intent.getStringExtra("getusername"));
+                }
+                break;
+            case 6:
+                if(resultCode == 6){
+                    mode = true;
+                    WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                            WindowManager.LayoutParams.TYPE_APPLICATION,
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                            PixelFormat.TRANSLUCENT);
+
+                    lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+                    lp.y = 10;
+                    if (mNightView == null) {
+                        mNightView = new TextView(this);
+                        mNightView.setBackgroundColor(0x80000000);
+                    }
+                    try{
+                        mWindowManager.addView(mNightView, lp);
+                    }catch(Exception ex){}
+                }
+                else if(resultCode == 7){
+                    mode = false;
+                    try{
+                        mWindowManager.removeView(mNightView);
+                    }catch(Exception ex){}
                 }
                 break;
         }

@@ -1,9 +1,11 @@
 package com.example.onepiece.slidingMenu;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Environment;
@@ -11,8 +13,11 @@ import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -20,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.onepiece.R;
+import com.example.onepiece.mainPage.MainActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -31,45 +37,76 @@ public class EditActivity extends AppCompatActivity {
     private static final int CROP_SMALL_PICTURE = 2;
     protected static Uri tempUri;
     private ImageView iv_personal_icon;
+    private View mNightView = null;
+    private WindowManager mWindowManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mWindowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
-        ImageButton imageButton1 = findViewById(R.id.comeback);
-        imageButton1.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                finish();
-            }
-        });
+        init();
+
         Button button = findViewById(R.id.register_btn_sure);
         button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                Toast.makeText(EditActivity.this,"修改成功",Toast.LENGTH_SHORT).show();
+
                 TextView textView1 = findViewById(R.id.edt_register_account);
                 TextView textView2 = findViewById(R.id.edt_register_pwd);
-                ImageView imageView = findViewById(R.id.img_upload_img);
                 String s1 = textView1.getText().toString();
                 String s2 = textView2.getText().toString();
-                Bitmap i3 = BitmapFactory.decodeResource(getResources(), R.id.img_upload_img);
-                //Bitmap i3 =((BitmapDrawable) ((ImageView) imageView).getDrawable()).getBitmap();
-                //Bitmap i3 = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
-                Intent intent = new Intent();
-                intent.putExtra("getusername" , s1);
-                intent.putExtra("getpwd",s2);
-                intent.putExtra("getimage",i3);
-                setResult(3, intent);
+
+                if(null == s1 || "".equals(s1)){
+                    Toast.makeText(EditActivity.this,"用户名不能为空",Toast.LENGTH_SHORT).show();
+                }
+                else if(null == s2 || "".equals(s2)){
+                    Toast.makeText(EditActivity.this,"密码不能为空",Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(EditActivity.this,"修改成功",Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent();
+                    intent.putExtra("getusername" , s1);
+                    intent.putExtra("getpwd",s2);
+                    setResult(3, intent);
+                    finish();
+                }
+
+            }
+        });
+        Toolbar toolbar = findViewById(R.id.edit_toolbar);
+        toolbar.setTitle("编辑资料");
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
                 finish();
             }
         });
-        iv_personal_icon = findViewById(R.id.img_upload_img);
-        iv_personal_icon.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                showChoosePicDialog();
+    }
+    //检测是否切换为夜间模式
+    public void init(){
+        if(MainActivity.mode){
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+
+            lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+            lp.y = 10;
+            if (mNightView == null) {
+                mNightView = new TextView(this);
+                mNightView.setBackgroundColor(0x80000000);
             }
-        });
+            try{
+                mWindowManager.addView(mNightView, lp);
+            }catch(Exception ex){}
+        }
+        else{
+            try{
+                mWindowManager.removeView(mNightView);
+            }catch(Exception ex){}
+        }
     }
     /**
      * 显示修改头像的对话框

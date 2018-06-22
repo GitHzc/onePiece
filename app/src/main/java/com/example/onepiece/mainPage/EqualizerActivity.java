@@ -1,5 +1,7 @@
 package com.example.onepiece.mainPage;
 
+import android.content.Context;
+import android.graphics.PixelFormat;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.BassBoost;
@@ -12,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
@@ -36,13 +39,17 @@ public class EqualizerActivity extends AppCompatActivity {
     private LinearLayout layout;
     private List<Short> reverbNames = new ArrayList<>();
     private List<String> reverbVals = new ArrayList<>();
+    private View mNightView = null;
+    private WindowManager mWindowManager;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mWindowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
         super.onCreate(savedInstanceState);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         setContentView(R.layout.activity_equalizer);
+        init();
 
         Toolbar toolbar = findViewById(R.id.equalizer_toolbar);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -65,7 +72,32 @@ public class EqualizerActivity extends AppCompatActivity {
             setUpPresetReverb();
         }
     }
+    //检测是否切换为夜间模式
+    public void init(){
+        if(MainActivity.mode){
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
 
+            lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
+            lp.y = 10;
+            if (mNightView == null) {
+                mNightView = new TextView(this);
+                mNightView.setBackgroundColor(0x80000000);
+            }
+            try{
+                mWindowManager.addView(mNightView, lp);
+            }catch(Exception ex){}
+        }
+        else{
+            try{
+                mWindowManager.removeView(mNightView);
+            }catch(Exception ex){}
+        }
+    }
     //初始化频谱
     private void setUpVisualizer() {
         final MyVisualizerView myVisualizerView = new MyVisualizerView(this);
