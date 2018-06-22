@@ -236,7 +236,10 @@ public class MusicPlayerService extends Service{
             String songListName = intent.getStringExtra("AddToSongList");
             if(songListName != null){
                 MyDataBaseHelper db = MyDataBaseHelper.get(MusicPlayerService.this, "OnePiece", 1);
-                db.insertSong(songListName, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId()));
+                String songListID = SongLists.get(MusicPlayerService.this).getSongListIdByTitle(songListName);
+                SongList songList = SongLists.get(MusicPlayerService.this).getSongListByTitle(songListName);
+                db.insertSong(songListID, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId()));
+                songList.setNumberOfSongs(songList.getNumberOfSongs() + 1);
             }
         }
     }

@@ -4,7 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/musicplayer.iml" filepath="$PROJECT_DIR$/musicplayer.iml" />
-      <module fileurl="file://F:\DeskTop\musicplayer\onePiece.iml" filepath="F:\DeskTop\musicplayer\onePiece.iml" />
+      <module fileurl="file://$PROJECT_DIR$/onePiece.iml" filepath="$PROJECT_DIR$/onePiece.iml" />
+      <module fileurl="file://F:/DeskTop/musicplayer/onePiece.iml" filepath="F:/DeskTop/musicplayer/onePiece.iml" />
     </modules>
   </component>
 </project>

@@ -22,11 +22,13 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.onepiece.R;
 import com.example.onepiece.mainPage.MainActivity;
 import com.example.onepiece.model.SongList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PlayerActivity extends AppCompatActivity implements View.OnClickListener{
@@ -367,7 +369,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         window.setFocusable(true);
 
         // 实例化一个ColorDrawable颜色为半透明
-        ColorDrawable dw = new ColorDrawable(0xb0000000);
+        ColorDrawable dw = new ColorDrawable(0xd027408B);
         window.setBackgroundDrawable(dw);
 
         // 设置popWindow的显示和消失动画
@@ -375,12 +377,28 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         // 在底部显示
         window.showAtLocation(PlayerActivity.this.findViewById(R.id.playinglist), Gravity.BOTTOM, 0, 0);
 
-
+        final List<String> musicNameList = new ArrayList<String>();
+        for(String url:PlayingList){
+            int startIndex = 0, endIndex = url.length() - 1;
+            for(int i = url.length() - 1; i >= 0; i--){
+                if(endIndex == url.length() - 1 && url.charAt(i) == '.'){
+                    endIndex = i;
+                    continue;
+                }
+                if(url.charAt(i) == '/'){
+                    startIndex = i;
+                    break;
+                }
+            }
+            musicNameList.add(url.substring(startIndex + 1, endIndex));
+        }
         ListView playingList = (ListView) view.findViewById(R.id.playingList);
-        playingList.setAdapter(new ArrayAdapter<String>(this, R.layout.playing_list_item, PlayingList));
+        playingList.setAdapter(new ArrayAdapter<String>(this, R.layout.playing_list_item, musicNameList));
         playingList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                final List<String> temp = musicNameList;
+                Toast.makeText(PlayerActivity.this, "播放歌曲：" + temp.get(i), Toast.LENGTH_SHORT);
                 BCSender("JumpToUrl",PlayingList.get(i));
             }
         });
@@ -395,18 +413,18 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         window.setFocusable(true);
 
         // 实例化一个ColorDrawable颜色为半透明
-        ColorDrawable dw = new ColorDrawable(0xb0000000);
+        ColorDrawable dw = new ColorDrawable(0xd027408B);
         window.setBackgroundDrawable(dw);
 
         window.setAnimationStyle(R.style.popupwindow_moving);
         window.showAtLocation(PlayerActivity.this.findViewById(R.id.playinglist), Gravity.BOTTOM, 0, 0);
-
 
         ListView playingList = (ListView) view.findViewById(R.id.playingList);
         playingList.setAdapter(new ArrayAdapter<String>(this, R.layout.playing_list_item, songList));
         playingList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Toast.makeText(PlayerActivity.this, "添加到歌单：" + songList.get(i), Toast.LENGTH_SHORT);
                 BCSender("AddToSongList", songList.get(i));
             }
         });
