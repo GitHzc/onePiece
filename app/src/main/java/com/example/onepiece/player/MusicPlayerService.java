@@ -2,6 +2,7 @@ package com.example.onepiece.player;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -238,8 +239,14 @@ public class MusicPlayerService extends Service{
                 MyDataBaseHelper db = MyDataBaseHelper.get(MusicPlayerService.this, "OnePiece", 1);
                 String songListID = SongLists.get(MusicPlayerService.this).getSongListIdByTitle(songListName);
                 SongList songList = SongLists.get(MusicPlayerService.this).getSongListByTitle(songListName);
-                db.insertSong(songListID, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId()));
-                songList.setNumberOfSongs(songList.getNumberOfSongs() + 1);
+                if(db.insertSong(songListID, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId())) == true){
+                    //数据库同步
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put("numberOfSongs", songList.getNumberOfSongs() + 1);
+                    db.updateSongList(contentValues, songListName);
+                    //歌单即时同步
+                    songList.setNumberOfSongs(songList.getNumberOfSongs() + 1);
+                }
             }
         }
     }
