@@ -63,20 +63,19 @@ public class MusicPlayerService extends Service{
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        mMusicPlayerService = this;
         if(intent.getStringExtra("playlistTitle") != null){
             mPlaylistTitle = intent.getStringExtra("playlistTitle");
         }
         if(intent.getIntExtra("index", 0) != -1) {
             mCurrentSongIndex = intent.getIntExtra("index", -1);
         }
-        Log.d(DebugMessage.TAG, "onStartCommand: title " + mPlaylistTitle);
-        Log.d(DebugMessage.TAG, "onStartCommand: index " + mCurrentSongIndex);
 
         //注册广播接收器
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.broadcast.ToService");
         registerReceiver(mBcReceiver, intentFilter);
-        System.out.println("Service Broadcast Registered!!!");
+
         //初始化播放器
         InitMediaPlayer();
         //同步歌曲播放进度
@@ -237,7 +236,7 @@ public class MusicPlayerService extends Service{
             String songListName = intent.getStringExtra("AddToSongList");
             if(songListName != null){
                 MyDataBaseHelper db = MyDataBaseHelper.get(MusicPlayerService.this, "OnePiece", 1);
-                db.insertSong(db.getWritableDatabase(), songListName, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId()));
+                db.insertSong(songListName, String.valueOf(Playlist.get(MusicPlayerService.this, mPlaylistTitle).getSongs().get(mCurrentSongIndex).getId()));
             }
         }
     }

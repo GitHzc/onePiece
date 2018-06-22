@@ -30,39 +30,43 @@ public class Playlist {
         mSongs = new ArrayList<>();
         MyDataBaseHelper myDataBaseHelper = MyDataBaseHelper.get(context, "OnePiece", 1);
         String id = SongLists.get(context).getSongListIdByTitle(title);
-        Cursor cursor = myDataBaseHelper.queryAllSong(myDataBaseHelper.getWritableDatabase(), id);
-        for (int i = 0; i < cursor.getCount(); i++) {
-            cursor.moveToNext();
-            id = cursor.getString(cursor.getColumnIndex("id"));
-            Cursor query = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    null,
-                    MediaStore.Audio.Media._ID + " = ?",
-                    new String[] {id},
-                    null);
+        Cursor cursor = myDataBaseHelper.queryAllSong(id);
+        try {
+            for (int i = 0; i < cursor.getCount(); i++) {
+                cursor.moveToNext();
+                id = cursor.getString(cursor.getColumnIndex("id"));
+                Cursor query = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        null,
+                        MediaStore.Audio.Media._ID + " = ?",
+                        new String[]{id},
+                        null);
 
-            for (int j = 0; j < query.getCount(); j++) {
-                query.moveToNext();
+                for (int j = 0; j < query.getCount(); j++) {
+                    query.moveToNext();
 
-                long song_id = query.getLong(query.getColumnIndex(MediaStore.Audio.Media._ID));
-                String song_title = query.getString(query.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String artist = query.getString(query.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                long duration = query.getLong(query.getColumnIndex(MediaStore.Audio.Media.DURATION));
-                String url = query.getString(query.getColumnIndex(MediaStore.Audio.Media.DATA));
-                String album = query.getString(query.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                int isMusic = query.getInt(query.getColumnIndex(MediaStore.Audio.Media.IS_MUSIC));
+                    long song_id = query.getLong(query.getColumnIndex(MediaStore.Audio.Media._ID));
+                    String song_title = query.getString(query.getColumnIndex(MediaStore.Audio.Media.TITLE));
+                    String artist = query.getString(query.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                    long duration = query.getLong(query.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                    String url = query.getString(query.getColumnIndex(MediaStore.Audio.Media.DATA));
+                    String album = query.getString(query.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                    int isMusic = query.getInt(query.getColumnIndex(MediaStore.Audio.Media.IS_MUSIC));
 
-                song_title = (song_title == null) ? "unknown" : song_title;
-                artist = (artist == null) ? "unknown" : artist;
-                album = (album == null) ? "unknown" : album;
+                    song_title = (song_title == null) ? "unknown" : song_title;
+                    artist = (artist == null) ? "unknown" : artist;
+                    album = (album == null) ? "unknown" : album;
 
-                if (isMusic != 0) {
-                    Song song = new Song(song_id, song_title, artist, duration, url, album);
-                    mSongs.add(song);
+                    if (isMusic != 0) {
+                        Song song = new Song(song_id, song_title, artist, duration, url, album);
+                        mSongs.add(song);
+                    }
                 }
+                query.close();
             }
-            query.close();
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        cursor.close();
     }
 
     public List<Song> getSongs() {

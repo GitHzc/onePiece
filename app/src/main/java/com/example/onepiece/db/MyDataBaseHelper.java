@@ -3,6 +3,7 @@ package com.example.onepiece.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -51,51 +52,94 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
     }
 
     //创建歌单表
-    public void createSongList(SQLiteDatabase db, String id) {
-        db.execSQL("create table " + id + "(id primary key);");
+    public void createSongList(String id) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            db.execSQL("create table " + id + "(id primary key);");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     //删除歌单
-    public void dropSongList(SQLiteDatabase db, String id) {
-        db.execSQL("drop table " + id);
+    public void dropSongList(String id) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            db.execSQL("drop table " + id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     //添加歌单
-    public void insertSongList(SQLiteDatabase db, ContentValues contentValues) {
-        db.insert("SongLists", null, contentValues);
+    public void insertSongList(ContentValues contentValues) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            db.insert("SongLists", null, contentValues);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void deleteSongList(SQLiteDatabase db, String title) {
-        db.delete("SongLists", "title = ?", new String[]{title});
+    public void deleteSongList(String title) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            db.delete("SongLists", "title = ?", new String[]{title});
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     //返回歌单列表全部歌单
-    public Cursor querySongList(SQLiteDatabase db) {
-        return db.rawQuery("select * from SongLists;", null);
+    public Cursor querySongList() {
+        SQLiteDatabase db = sMyDataBaseHelper.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from SongLists;", null);
+        return cursor;
     }
 
-    public void updateSongList(SQLiteDatabase db, ContentValues contentValues, String title) {
-        db.update("SongLists", contentValues, "title = ?", new String[]{title});
+    public void updateSongList(ContentValues contentValues, String title) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            db.update("SongLists", contentValues, "title = ?", new String[]{title});
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     //返回歌单全部歌曲
-    public Cursor queryAllSong(SQLiteDatabase db, String songList) {
-        return db.rawQuery(String.format(Locale.getDefault(), "select * from %s;", songList), null);
+    public Cursor queryAllSong(String songList) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            return db.rawQuery(String.format(Locale.getDefault(), "select * from %s;", songList), null);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     //删除歌单中歌曲
-    public void deleteSong(SQLiteDatabase db, String songList, String id) {
-        db.delete(songList, "id = ?", new String[]{id});
+    public void deleteSong(String songList, String id) {
+        try {
+            SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
+            db.delete(songList, "id = ?", new String[]{id});
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     //歌单添加歌曲
-    public boolean insertSong(SQLiteDatabase db, String songList, String id) {
+    public boolean insertSong(String songList, String id) {
+        SQLiteDatabase db = sMyDataBaseHelper.getWritableDatabase();
         try {
             db.execSQL("insert into " + songList + "(id) values(?);", new String[]{id});
             return true;
         } catch (SQLiteConstraintException e) {
             return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
+
     }
 
     public List<SearchResultItem> querySong(Context context, String query) {

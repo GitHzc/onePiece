@@ -1,10 +1,15 @@
 package com.example.onepiece.mainPage;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -114,7 +119,7 @@ public class SearchResultFragment extends Fragment {
         public void onBindViewHolder(@NonNull ResultHolder holder, int position) {
             final SearchResultItem searchResultItem = mResults.get(position);
             holder.mSongTitle.setText(searchResultItem.getTitle());
-            holder.mSongToken.setImageResource(searchResultItem.getToken() == 1 ? R.drawable.play : R.drawable.download);
+            holder.mSongToken.setImageResource(searchResultItem.getToken() == 1 ? R.drawable.play_icon : R.drawable.download);
             holder.mView.setTag(searchResultItem.getToken());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -122,10 +127,10 @@ public class SearchResultFragment extends Fragment {
                 public void onClick(View v) {
                     int token = (int)v.getTag();
                     if (token == 0) {
-                        String musicDirectory = Environment.getExternalStoragePublicDirectory(DIRECTORY_MUSIC).getAbsolutePath();
-                        String fileName = musicDirectory + File.separator + searchResultItem.getTitle() + ".mp3";
+                        String musicDirectory = FileUtils.getMusicDirectory();
+                        String fileName = musicDirectory + searchResultItem.getTitle() + ".mp3";
                         resourceDownload(fileName, "audio", searchResultItem.getAudio());
-                        fileName = musicDirectory + File.separator + "lyric" + File.separator + searchResultItem.getTitle() + ".lrc";
+                        fileName = FileUtils.getLyricDirectory() + searchResultItem.getTitle() + ".lrc";
                         resourceDownload(fileName, "lyric", searchResultItem.getLyric());
                     } else {
                         Intent intent = new Intent(getActivity(), PlayerActivity.class);
@@ -211,7 +216,7 @@ public class SearchResultFragment extends Fragment {
                 });
     }
 
-    void resourceDownload(final String fileName, final String requestType, int fileId) {
+    private void resourceDownload(final String fileName, final String requestType, final int fileId) {
         Retrofit retrofit = HttpUtils.getRetrofit();
         HttpUtils.MyApi api = retrofit.create(HttpUtils.MyApi.class);
         DownloadFile df = new DownloadFile();
@@ -219,14 +224,18 @@ public class SearchResultFragment extends Fragment {
         df.setRequestType(requestType);
         api.downloadFile(df)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<ResponseBody>() {
                     @Override
                     public void onSubscribe(Disposable d) {}
 
                     @Override
-                    public void onNext(ResponseBody responseBody) {
+                    public void onNext(final ResponseBody responseBody) {
                         FileUtils.writeResponseBodyToFile(fileName, responseBody);
+                        if (requestType.equals("audio")) {
+                            MediaScannerConnection.scanFile(getActivity(), new String[]{fileName}, null, null);
+                            String id = getSongIdByPath(getActivity(), fileName);
+                            mapId(getActivity(), id, fileId);
+                        }
                     }
 
                     @Override
@@ -234,11 +243,30 @@ public class SearchResultFragment extends Fragment {
 
                     @Override
                     public void onComplete() {
-                        Toast.makeText(getActivity(), "download completed", Toast.LENGTH_SHORT).show();
-                        if (requestType.equals("audio")) {
-                            MediaScannerConnection.scanFile(getActivity(), new String[]{fileName}, null, null);
-                        }
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getActivity(), "下载完成", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 });
+    }
+
+    public static String getSongIdByPath(Context context, String filePath) {
+        Cursor cursor = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Audio.Media._ID},
+                MediaStore.Audio.Media.DATA + "=?",
+                new String[]{filePath},
+                null);
+        cursor.moveToNext();
+        String id = cursor.getString(0);
+        cursor.close();
+        return id;
+    }
+
+    public static void mapId(Context context, String fromId, int toId) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        sharedPreferences.edit().putInt(fromId, toId).apply();
     }
 }

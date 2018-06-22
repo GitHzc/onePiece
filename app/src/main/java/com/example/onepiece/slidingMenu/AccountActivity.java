@@ -20,6 +20,16 @@ import android.widget.Toast;
 
 import com.example.onepiece.R;
 import com.example.onepiece.mainPage.MainActivity;
+import com.example.onepiece.model.User;
+import com.example.onepiece.model.UserBean;
+import com.example.onepiece.util.HttpUtils;
+
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.Retrofit;
 
 
 public class AccountActivity extends AppCompatActivity {
@@ -46,24 +56,18 @@ public class AccountActivity extends AppCompatActivity {
         button1.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                TextView textView1 = findViewById(R.id.username);
-                TextView textView2 = findViewById(R.id.password);
-                String s = textView1.getText().toString();
-                String s2 = textView2.getText().toString();
+                String username = showname.getText().toString();
+                String password = showpwd.getText().toString();
+
                 //判断用户名和密码是否为空
-                if(null == s || "".equals(s)){
+                if(null == username || "".equals(username)){
                     Toast.makeText(AccountActivity.this,"用户名不能为空",Toast.LENGTH_SHORT).show();
                 }
-                else if(null == s2 || "".equals(s2)){
+                else if(null == password || "".equals(password)){
                     Toast.makeText(AccountActivity.this,"密码不能为空",Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    ////////*****这里需要判断用户名与密码匹配
-                    Toast.makeText(AccountActivity.this,"登录成功",Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent();
-                    intent.putExtra("getusername" , s);
-                    setResult(4,intent);
-                    finish();
+                    login(username, password);
                 }
             }
         });
@@ -119,6 +123,45 @@ public class AccountActivity extends AppCompatActivity {
                 showpwd.setText(intent.getStringExtra("getpwd"));
                 break;
         }
+    }
+    
+    private void login(String username, String password) {
+        Retrofit retrofit = HttpUtils.getRetrofit();
+        HttpUtils.MyApi api = retrofit.create(HttpUtils.MyApi.class);
+        UserBean user = new UserBean();
+        user.setUsername(username);
+        user.setPassword(password);
+        api.login(user)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ResponseBody>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {}
 
+                    @Override
+                    public void onNext(ResponseBody responseBody) {
+                        Toast.makeText(AccountActivity.this,"登录成功",Toast.LENGTH_SHORT).show();
+                        String s = showname.getText().toString();
+                        User.get().setUsername(s);
+                        Intent intent = new Intent();
+                        intent.putExtra("getusername" , s);
+                        setResult(4,intent);
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        String errorMessage = e.getMessage();
+                        if (errorMessage.contains("406")) {
+                            showname.setText("");
+                            showname.setHint("用户名或密码错误");
+                        } else if (errorMessage.contains("400")) {
+                            Toast.makeText(AccountActivity.this, "请求错误", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onComplete() {}
+                });
     }
 }

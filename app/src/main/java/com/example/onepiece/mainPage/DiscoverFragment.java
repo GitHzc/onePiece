@@ -1,12 +1,11 @@
 package com.example.onepiece.mainPage;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,26 +13,24 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.animation.OvershootInterpolator;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.onepiece.R;
 import com.example.onepiece.model.DiscoveryBean;
-import com.example.onepiece.util.DebugMessage;
+import com.example.onepiece.model.OneBean;
+import com.example.onepiece.util.FileUtils;
 import com.example.onepiece.util.HttpUtils;
 import com.example.onepiece.util.ScreenUtils;
-import com.ramotion.foldingcell.FoldingCell;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -218,45 +215,58 @@ public class DiscoverFragment extends Fragment {
     }
 
     private void getDiscovery() {
-        Retrofit retrofit = HttpUtils.getRetrofit();
-        HttpUtils.MyApi api = retrofit.create(HttpUtils.MyApi.class);
-        api.fetchDiscovery()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<List<DiscoveryBean>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {}
+        if (!readCache()) {
+            Retrofit retrofit = HttpUtils.getRetrofit();
+            HttpUtils.MyApi api = retrofit.create(HttpUtils.MyApi.class);
+            api.fetchDiscovery()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<List<DiscoveryBean>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                        }
 
-                    @Override
-                    public void onNext(List<DiscoveryBean> discoveryBeans) {
-                        mDiscoveryItems = discoveryBeans;
-                    }
+                        @Override
+                        public void onNext(List<DiscoveryBean> discoveryBeans) {
+                            mDiscoveryItems = discoveryBeans;
+                            saveInCache(discoveryBeans);
+                        }
 
-                    @Override
-                    public void onError(Throwable e) {}
+                        @Override
+                        public void onError(Throwable e) {
+                        }
 
-                    @Override
-                    public void onComplete() {
-                        Toast.makeText(getActivity(), "fetch discovery content complete", Toast.LENGTH_SHORT).show();
-                        MasonryAdapter adapter = new MasonryAdapter(mDiscoveryItems, getContext());
-                        mRecyclerView.setAdapter(adapter);
-                    }
-                });
-//        mDiscoveryItems = new ArrayList<>();
-//        DiscoveryBean discoveryBean = new DiscoveryBean();
-//        DiscoveryBean.AuthorBean authorBean = new DiscoveryBean.AuthorBean();
-//        DiscoveryBean.SongBean songBean = new DiscoveryBean.SongBean();
-//        authorBean.setUsername("某某");
-//        songBean.setTitle("浮夸");
-//        songBean.setArtist("陈奕迅");
-//        discoveryBean.setSong(songBean);
-//        discoveryBean.setAuthor(authorBean);
-//        discoveryBean.setText("好听");
-//        discoveryBean.setCreateDatetime("2018-09-01T11:11");
-//        for (int i = 0; i < 10; i++) {
-//            mDiscoveryItems.add(discoveryBean);
-//        }
-//        MasonryAdapter adapter = new MasonryAdapter(mDiscoveryItems, getContext());
-//        mRecyclerView.setAdapter(adapter);
+                        @Override
+                        public void onComplete() {
+                            MasonryAdapter adapter = new MasonryAdapter(mDiscoveryItems, getContext());
+                            mRecyclerView.setAdapter(adapter);
+                        }
+                    });
+        }
+    }
+
+    private boolean saveInCache(List<DiscoveryBean> discoveryBeans) {
+        String discoveryPath = FileUtils.getDiscoveryCacheDirectory(getActivity());
+        FileUtils.createDir(discoveryPath);
+        Date date = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        String fileName = simpleDateFormat.format(date);
+        return FileUtils.saveParcelableObject(discoveryBeans, discoveryPath + fileName);
+    }
+
+    private boolean readCache() {
+        String discoveryCache = FileUtils.getDiscoveryCacheDirectory(getActivity());
+        Date date = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        String fileName = simpleDateFormat.format(date);
+        List<DiscoveryBean> discoveryBeans = (List<DiscoveryBean>)FileUtils.readParcelableObject(discoveryCache + fileName);
+        if (discoveryBeans!= null) {
+            mDiscoveryItems = discoveryBeans;
+            MasonryAdapter adapter = new MasonryAdapter(mDiscoveryItems, getContext());
+            mRecyclerView.setAdapter(adapter);
+            return true;
+        }
+        return false;
     }
 }
+

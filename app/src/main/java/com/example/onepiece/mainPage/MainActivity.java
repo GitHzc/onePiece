@@ -8,9 +8,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
@@ -31,12 +33,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.onepiece.R;
 import com.example.onepiece.slidingMenu.AccountActivity;
 import com.example.onepiece.slidingMenu.EditActivity;
 import com.example.onepiece.slidingMenu.LightActivity;
 import com.example.onepiece.slidingMenu.LoginActivity;
 import com.example.onepiece.util.DebugMessage;
+import com.example.onepiece.util.FileUtils;
 import com.example.onepiece.util.Utility;
 
 import java.util.ArrayList;
@@ -213,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         else if(id == R.id.nav_clear){
             Toast.makeText(this, "已清除本地缓存", Toast.LENGTH_SHORT).show();
             //这里还需要添加代码，删除本地缓存的文件夹内的内容
+            FileUtils.clearCache(MainActivity.this);
         }
         else if(id == R.id.nav_version){
             Intent intent_version = new Intent(MainActivity.this,LoginActivity.class);
@@ -239,9 +246,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 mPermissionList.add(permissions[i]);
             }
         }
-        if (mPermissionList.isEmpty()) {
-            Toast.makeText(MainActivity.this, "已经授权", Toast.LENGTH_SHORT).show();
-        } else {
+        if (!mPermissionList.isEmpty()) {
             permissions = mPermissionList.toArray(new String[mPermissionList.size()]);
             ActivityCompat.requestPermissions(MainActivity.this, permissions, Utility.REQUEST_PERMISSION);
         }
@@ -261,10 +266,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public void onActivityResult(int requestCode,int resultCode,Intent intent){
+       public void onActivityResult(int requestCode,int resultCode,Intent intent){
         super.onActivityResult(requestCode, resultCode, intent);
         TextView myID;
-        CircleImageView myimage;
+        final CircleImageView myimage;
         NavigationView navigationView = findViewById(R.id.nav_view);
         View headview = navigationView.getHeaderView(0);
         switch (requestCode){
@@ -272,39 +277,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if(resultCode == 3){
                     myID = headview.findViewById(R.id.show_username);
                     myID.setText(intent.getStringExtra("getusername"));
+                    myimage = headview.findViewById(R.id.show_image);
+                    Glide.with(MainActivity.this).load(intent.getData()).into(new SimpleTarget<Drawable>() {
+                        @Override
+                        public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                            myimage.setImageDrawable(resource);
+                        }
+                    });
                 }
                 break;
             case 4:
                 if(resultCode == 4){
                     myID = headview.findViewById(R.id.show_username);
                     myID.setText(intent.getStringExtra("getusername"));
-                }
-                break;
-            case 6:
-                if(resultCode == 6){
-                    mode = true;
-                    WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                            WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.FILL_PARENT,
-                            WindowManager.LayoutParams.TYPE_APPLICATION,
-                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                                    | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                            PixelFormat.TRANSLUCENT);
-
-                    lp.gravity = Gravity.BOTTOM;// 可以自定义显示的位置
-                    lp.y = 10;
-                    if (mNightView == null) {
-                        mNightView = new TextView(this);
-                        mNightView.setBackgroundColor(0x80000000);
-                    }
-                    try{
-                        mWindowManager.addView(mNightView, lp);
-                    }catch(Exception ex){}
-                }
-                else if(resultCode == 7){
-                    mode = false;
-                    try{
-                        mWindowManager.removeView(mNightView);
-                    }catch(Exception ex){}
                 }
                 break;
         }

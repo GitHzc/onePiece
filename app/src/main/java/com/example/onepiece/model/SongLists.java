@@ -28,21 +28,30 @@ public class SongLists {
     private SongLists(Context context) {
         mSongLists = new ArrayList<>();
         MyDataBaseHelper myDataBaseHelper = MyDataBaseHelper.get(context, "OnePiece", 1);
-        Cursor cursor = myDataBaseHelper.querySongList(myDataBaseHelper.getReadableDatabase());
-        for (int i = 0; i < cursor.getCount(); i++) {
-            cursor.moveToNext();
-            String id = cursor.getString(cursor.getColumnIndex("id"));
-            String title = cursor.getString(cursor.getColumnIndex("title"));
-            int numberOfSongs = cursor.getInt(cursor.getColumnIndex("numberOfSongs"));
-            String createTime = cursor.getString(cursor.getColumnIndex("createTime"));
-            String uri = cursor.getString(cursor.getColumnIndex("pictureUri"));
-            mSongLists.add(new SongList(id, title, numberOfSongs, createTime, uri));
+        Cursor cursor = myDataBaseHelper.querySongList();
+        try {
+            for (int i = 0; i < cursor.getCount(); i++) {
+                cursor.moveToNext();
+                String id = cursor.getString(cursor.getColumnIndex("id"));
+                String title = cursor.getString(cursor.getColumnIndex("title"));
+                int numberOfSongs = cursor.getInt(cursor.getColumnIndex("numberOfSongs"));
+                String createTime = cursor.getString(cursor.getColumnIndex("createTime"));
+                String uri = cursor.getString(cursor.getColumnIndex("pictureUri"));
+                mSongLists.add(new SongList(id, title, numberOfSongs, createTime, uri));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            cursor.close();
         }
-        cursor.close();
     }
 
     public List<SongList> getSongLists() {
         return mSongLists;
+    }
+
+    public void setSongLists(List<SongList> songLists) {
+        mSongLists = songLists;
     }
 
     public String getSongListIdByTitle(String title) {

@@ -4,12 +4,17 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import com.example.onepiece.model.SongBean;
+import com.example.onepiece.model.SongList;
+import com.example.onepiece.model.SongListBean;
 import com.example.onepiece.model.DiscoveryBean;
 import com.example.onepiece.model.DownloadFile;
 import com.example.onepiece.model.OneBean;
 import com.example.onepiece.model.Query;
 import com.example.onepiece.model.SearchResultBean;
-import com.google.gson.Gson;
+import com.example.onepiece.model.SongListOfUserBean;
+import com.example.onepiece.model.UserBean;
+import com.example.onepiece.model.UserNameBean;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -18,13 +23,11 @@ import io.reactivex.Observable;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
-import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -65,6 +68,27 @@ public class HttpUtils {
 
         @GET("media/one/{picName}")
         Observable<ResponseBody> getOnePicture(@Path("picName") String picName);
+
+        @POST("user/register")
+        Observable<ResponseBody> register(@Body UserBean user);
+
+        @POST("user/login")
+        Observable<ResponseBody> login(@Body UserBean user);
+
+        @POST("music/playlist/create")
+        Observable<ResponseBody> createSongList(@Body SongListBean songListBean);
+
+        @POST("music/playlist/delete")
+        Observable<ResponseBody> deleteSongList(@Body SongListBean songListBean);
+
+        @POST("music/playlist/item/create")
+        Observable<ResponseBody> createSong(@Body SongBean songBean);
+
+        @POST("music/playlist/item/delete")
+        Observable<ResponseBody> deleteSong(@Body SongBean songBean);
+
+        @POST("music/playlist/getall")
+        Observable<List<SongListOfUserBean>> getSongListOfUser(@Body UserNameBean userNameBean);
     }
 
     public static Retrofit getRetrofit() {

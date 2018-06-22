@@ -43,21 +43,29 @@ import android.widget.Toast;
 
 import com.example.onepiece.R;
 import com.example.onepiece.mainPage.MainActivity;
+import com.example.onepiece.model.UserBean;
+import com.example.onepiece.util.HttpUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 
-public class DataActivity extends AppCompatActivity {
-    private String filePath = "/data/data/com.lg.slidingmenudemo/file/";
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.Retrofit;
 
+import static com.example.onepiece.util.HttpUtils.*;
+
+public class DataActivity extends AppCompatActivity {
+    private TextView textView1;
+    private TextView textView2;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
     private View mNightView = null;
     private WindowManager mWindowManager;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mWindowManager = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
@@ -69,28 +77,20 @@ public class DataActivity extends AppCompatActivity {
         button_count.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                TextView textView1 = findViewById(R.id.edt_register_account);
-                TextView textView2 = findViewById(R.id.edt_register_pwd);
-                String s = textView1.getText().toString();
-                String s2 = textView2.getText().toString();
+                String username = textView1.getText().toString();
+                String password = textView2.getText().toString();
                 //判断用户名和密码是否为空
-                if(null == s || "".equals(s)){
+                if(null == username || "".equals(username)){
                     Toast.makeText(DataActivity.this,"用户名不能为空",Toast.LENGTH_SHORT).show();
                 }
-                else if(null == s2 || "".equals(s2)){
+                else if(null == password || "".equals(password)){
                     Toast.makeText(DataActivity.this,"密码不能为空",Toast.LENGTH_SHORT).show();
                 }
-                else if(s2.length() < 6){
+                else if(password.length() < 6){
                     Toast.makeText(DataActivity.this,"密码长度应当大于六位",Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    Toast.makeText(DataActivity.this,"注册成功",Toast.LENGTH_SHORT).show();
-                    ////////******应当在这里与服务器连接，将用户名和密码传输到服务器，下面有将字符串写为文本文件的代码
-                    Intent intent = new Intent();
-                    intent.putExtra("getusername" ,s);
-                    intent.putExtra("getpwd",s2);
-                    setResult(5,intent);
-                    finish();
+                    register(username, password);
                 }
 
             }
@@ -100,11 +100,10 @@ public class DataActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                sentIntent();
                 finish();
             }
         });
-
-
     }
     //检测是否切换为夜间模式
     public void init(){
@@ -132,86 +131,49 @@ public class DataActivity extends AppCompatActivity {
             }catch(Exception ex){}
         }
     }
-    /**
-     *
-     检查应用程序是否允许写入存储设备
-
-     *
-     *
-     如果应用程序不允许那么会提示用户授予权限
-
-     *
-     * @param activity
-     */
-    public static void verifyStoragePermissions(Activity activity) {
-        // Check if we have write permission
-        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
+    
+    private void sentIntent() {
+        String s1 = textView1.getText().toString();
+        String s2 = textView2.getText().toString();
+        Intent intent = new Intent();
+        intent.putExtra("getusername" ,s1);
+        intent.putExtra("getpwd",s2);
+        setResult(5,intent);
     }
-    private void initData() {
-        String fileName = "log.txt";
+    
+    void register(String username, String password) {
+        Retrofit retrofit = getRetrofit();
+        MyApi api = retrofit.create(MyApi.class);
+        UserBean user = new UserBean();
+        user.setUsername(username);
+        user.setPassword(password);
+        api.register(user)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ResponseBody>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {}
 
-        writeTxtToFile("Username password", filePath, fileName);
-    }
+                    @Override
+                    public void onNext(ResponseBody responseBody) {
+                        Toast.makeText(DataActivity.this,"注册成功",Toast.LENGTH_SHORT).show();
+                        sentIntent();
+                        finish();
+                    }
 
-    // 将字符串写入到文本文件中
-    public void writeTxtToFile(String strcontent, String filePath, String fileName) {
-        //生成文件夹之后，再生成文件，不然会出错
-        makeFilePath(filePath, fileName);
+                    @Override
+                    public void onError(Throwable e) {
+                        String errorMessage = e.getMessage();
+                        if (errorMessage.contains("403")) {
+                            textView1.setText("");
+                            textView1.setHint("用户名已被注册");
+                        } else if (errorMessage.contains("400")){
+                            Toast.makeText(DataActivity.this, "请求错误", Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
-        String strFilePath = filePath+fileName;
-        // 每次写入时，都换行写
-        String strContent = strcontent + "\r\n";
-        try {
-            File file = new File(strFilePath);
-            if (!file.exists()) {
-                Log.d("TestFile", "Create the file:" + strFilePath);
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            }
-            RandomAccessFile raf = new RandomAccessFile(file, "rwd");
-            raf.seek(file.length());
-            raf.write(strContent.getBytes());
-            raf.close();
-        } catch (Exception e) {
-            Log.e("TestFile", "Error on write File:" + e);
-        }
-    }
-
-    // 生成文件
-    public File makeFilePath(String filePath, String fileName) {
-        File file = null;
-        makeRootDirectory(filePath);
-        try {
-            file = new File(filePath + fileName);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return file;
-    }
-
-    // 生成文件夹
-    public static void makeRootDirectory(String filePath) {
-        File file = null;
-        try {
-            file = new File(filePath);
-            if (!file.exists()) {
-                file.mkdir();
-            }
-        } catch (Exception e) {
-            Log.i("error:", e+"");
-        }
+                    @Override
+                    public void onComplete() {}
+                });
     }
 }

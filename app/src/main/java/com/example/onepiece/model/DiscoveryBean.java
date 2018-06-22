@@ -3,18 +3,21 @@ package com.example.onepiece.model;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
+
 /**
  * Created by Administrator on 2018/6/15 0015.
  */
 
-public class DiscoveryBean {
+public class DiscoveryBean implements Serializable {
 
     /**
-     * id : 228
-     * text : 最爱的歌没有之一
-     * create_datetime : 2018-06-06T11:26:35.388986Z
-     * author : {"id":528,"username":"OPU000127","password":"123456"}
-     * song : {"id":173,"title":"裙下之臣(live)","artist":"陈奕迅","album":"duo 陈奕迅2010演唱会","audio":173,"lyric":173}
+     * id : 389
+     * text : 好听！
+     * create_datetime : 2018-06-06T11:26:51.714897Z
+     * author : {"id":557,"username":"OPU000156","password":"123456","profile":"/media/media/profile/default.jpg"}
+     * song : {"id":212,"title":"蒲公英的约定","artist":"周杰伦","album":"我很忙","audio":212,"lyric":212}
      */
 
     @SerializedName("id")
@@ -73,11 +76,12 @@ public class DiscoveryBean {
         this.song = song;
     }
 
-    public static class AuthorBean {
+    public static class AuthorBean implements Serializable{
         /**
-         * id : 528
-         * username : OPU000127
+         * id : 557
+         * username : OPU000156
          * password : 123456
+         * profile : /media/media/profile/default.jpg
          */
 
         @SerializedName("id")
@@ -86,6 +90,8 @@ public class DiscoveryBean {
         private String username;
         @SerializedName("password")
         private String password;
+        @SerializedName("profile")
+        private String profile;
 
         public static AuthorBean objectFromData(String str) {
 
@@ -115,16 +121,24 @@ public class DiscoveryBean {
         public void setPassword(String password) {
             this.password = password;
         }
+
+        public String getProfile() {
+            return profile;
+        }
+
+        public void setProfile(String profile) {
+            this.profile = profile;
+        }
     }
 
-    public static class SongBean {
+    public static class SongBean implements Serializable{
         /**
-         * id : 173
-         * title : 裙下之臣(live)
-         * artist : 陈奕迅
-         * album : duo 陈奕迅2010演唱会
-         * audio : 173
-         * lyric : 173
+         * id : 212
+         * title : 蒲公英的约定
+         * artist : 周杰伦
+         * album : 我很忙
+         * audio : 212
+         * lyric : 212
          */
 
         @SerializedName("id")
@@ -194,3 +208,4 @@ public class DiscoveryBean {
         }
     }
 }
+

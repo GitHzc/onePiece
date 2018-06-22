@@ -3,11 +3,13 @@ package com.example.onepiece.model;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 /**
  * Created by Administrator on 2018/6/16 0016.
  */
 
-public class OneBean {
+public class OneBean implements Serializable{
 
     /**
      * id : 3
@@ -62,7 +64,7 @@ public class OneBean {
         this.song = song;
     }
 
-    public static class SongBean {
+    public static class SongBean implements Serializable {
         /**
          * id : 109
          * title : k歌之王
