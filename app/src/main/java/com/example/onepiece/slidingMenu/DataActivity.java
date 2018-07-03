@@ -73,6 +73,8 @@ public class DataActivity extends AppCompatActivity {
         setContentView(R.layout.activity_data);
         init();
 
+        textView1 = findViewById(R.id.edt_register_account);
+        textView2 = findViewById(R.id.edt_register_pwd);
         Button button_count = findViewById(R.id.register_btn_sure);
         button_count.setOnClickListener(new View.OnClickListener(){
             @Override
